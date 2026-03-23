@@ -1,0 +1,11 @@
+{
+  "name": "josh-product-team",
+  "version": "0.1.0",
+  "description": "Josh의 제품팀 AI 에이전트 — PM · 백엔드 · 프론트엔드 3인이 협력하여 기획·설계·구현까지 지원",
+  "author": {
+    "name": "Josh"
+  },
+  "keywords": ["product", "engineering", "backend", "frontend", "pm", "planning", "spec"],
+  "skills": "./skills/",
+  "commands": "./commands/"
+}
