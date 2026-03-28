@@ -1,0 +1,78 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1774438778451,
+  "projectRoot": "/Users/ologist/dev/vscode/josh-product-team",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "commands": {
+      "path": "commands",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1774438778438,
+      "keyFiles": [
+        "code-review.md",
+        "feature-plan.md",
+        "sprint-plan.md"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 1,
+      "lastAccessed": 1774438778438,
+      "keyFiles": [
+        "josh-product-team-0.1.0.plugin"
+      ]
+    },
+    "skills": {
+      "path": "skills",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1774438778438,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "install.sh",
+      "accessCount": 5,
+      "lastAccessed": 1774439149596,
+      "type": "file"
+    },
+    {
+      "path": ".claude-plugin/plugin.json",
+      "accessCount": 1,
+      "lastAccessed": 1774438828814,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

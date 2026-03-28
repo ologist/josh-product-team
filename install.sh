@@ -65,35 +65,69 @@ rsync -a --exclude='.git' --exclude='dist' --exclude='install.sh' \
 echo "   → $INSTALL_PATH"
 
 # ── 3. Claude 앱(Cowork) 플러그인 경로 업데이트 ─────────────
+# 실제 로딩 경로: <session>/<cowork>/cowork_plugins/marketplaces/local-desktop-app-uploads/<name>/
+# 등록 파일:      <session>/<cowork>/cowork_plugins/installed_plugins.json  (key: @josh)
 COWORK_SESSIONS="$HOME/Library/Application Support/Claude/local-agent-mode-sessions"
+
+_install_to_cowork() {
+  local UPLOAD_DIR="$1"   # cowork_plugins/marketplaces/local-desktop-app-uploads/<name>
+  local COWORK_PLUGINS="$2"  # cowork_plugins/
+  local NOW="$3"
+  mkdir -p "$UPLOAD_DIR/.claude-plugin"
+  cp "$PLUGIN_JSON" "$UPLOAD_DIR/.claude-plugin/plugin.json"
+  rsync -a --delete "$PLUGIN_DIR/skills/" "$UPLOAD_DIR/skills/"
+  rsync -a --delete "$PLUGIN_DIR/commands/" "$UPLOAD_DIR/commands/"
+  rsync -a "$PLUGIN_DIR/README.md" "$UPLOAD_DIR/" 2>/dev/null || true
+  python3 -c "
+import json
+path = '$COWORK_PLUGINS/installed_plugins.json'
+try:
+    with open(path) as f: d = json.load(f)
+except FileNotFoundError:
+    d = {'version': 2, 'plugins': {}}
+key = '${PLUGIN_NAME}@josh'
+entry = {'scope': 'user', 'installPath': '$UPLOAD_DIR', 'version': '$PLUGIN_VERSION',
+         'installedAt': '$NOW', 'lastUpdated': '$NOW'}
+if key in d.get('plugins', {}) and d['plugins'][key]:
+    d['plugins'][key][0]['version'] = '$PLUGIN_VERSION'
+    d['plugins'][key][0]['lastUpdated'] = '$NOW'
+    d['plugins'][key][0]['installPath'] = '$UPLOAD_DIR'
+else:
+    d.setdefault('plugins', {})[key] = [entry]
+with open(path, 'w') as f: json.dump(d, f, indent=2); f.write('\n')
+"
+}
+
 if [ -d "$COWORK_SESSIONS" ]; then
   echo ""
   echo "🖥️  Claude 앱 플러그인 업데이트 중..."
   FOUND=0
+  NOW=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+
+  # 기존 플러그인 폴더가 있으면 갱신
   while IFS= read -r pjson; do
     UPLOAD_DIR="$(dirname "$(dirname "$pjson")")"
-    COWORK_BASE="$(dirname "$(dirname "$(dirname "$UPLOAD_DIR")")")"
-    cp "$PLUGIN_JSON" "$pjson"
-    rsync -a --delete "$PLUGIN_DIR/skills/" "$UPLOAD_DIR/skills/"
-    rsync -a --delete "$PLUGIN_DIR/commands/" "$UPLOAD_DIR/commands/"
-    rsync -a "$PLUGIN_DIR/README.md" "$UPLOAD_DIR/"
-    NOW=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
-    python3 -c "
-import json
-path = '$COWORK_BASE/installed_plugins.json'
-try:
-    with open(path) as f: d = json.load(f)
-    key = '${PLUGIN_NAME}@local-desktop-app-uploads'
-    if key in d.get('plugins', {}):
-        d['plugins'][key][0]['version'] = '$PLUGIN_VERSION'
-        d['plugins'][key][0]['lastUpdated'] = '$NOW'
-        with open(path, 'w') as f: json.dump(d, f, indent=2); f.write('\n')
-except: pass
-"
-    echo "   → $UPLOAD_DIR"
+    COWORK_PLUGINS="$(dirname "$(dirname "$UPLOAD_DIR")")"
+    _install_to_cowork "$UPLOAD_DIR" "$COWORK_PLUGINS" "$NOW"
+    echo "   → $UPLOAD_DIR (업데이트)"
     FOUND=1
-  done < <(find "$COWORK_SESSIONS" -path "*/local-desktop-app-uploads/$PLUGIN_NAME/.claude-plugin/plugin.json" 2>/dev/null)
-  [ "$FOUND" -eq 0 ] && echo "   (업로드된 플러그인 없음 — 스킵)"
+  done < <(find "$COWORK_SESSIONS" -path "*/cowork_plugins/marketplaces/local-desktop-app-uploads/$PLUGIN_NAME/.claude-plugin/plugin.json" 2>/dev/null)
+
+  # 최초 설치: cowork_plugins/marketplaces/local-desktop-app-uploads 를 찾아 신규 등록
+  if [ "$FOUND" -eq 0 ]; then
+    LATEST_UPLOADS=$(find "$COWORK_SESSIONS" -type d -path "*/cowork_plugins/marketplaces/local-desktop-app-uploads" 2>/dev/null \
+      | xargs -I{} stat -f "%m %N" {} 2>/dev/null \
+      | sort -rn | head -1 | cut -d' ' -f2-)
+    if [ -n "$LATEST_UPLOADS" ]; then
+      UPLOAD_DIR="$LATEST_UPLOADS/$PLUGIN_NAME"
+      COWORK_PLUGINS="$(dirname "$(dirname "$LATEST_UPLOADS")")"
+      _install_to_cowork "$UPLOAD_DIR" "$COWORK_PLUGINS" "$NOW"
+      echo "   → $UPLOAD_DIR (신규 설치)"
+      FOUND=1
+    fi
+  fi
+
+  [ "$FOUND" -eq 0 ] && echo "   (cowork_plugins 없음 — 스킵)"
 fi
 
 # ── 4. ~/.claude/commands/ 에 커맨드 복사 ──────────────────

@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Plugin build output
+dist/
+
+# OMC 런타임 세션/상태 데이터 (프로젝트 메모리는 유지)
+.omc/sessions/
+.omc/state/
